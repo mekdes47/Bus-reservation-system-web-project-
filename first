@@ -1,0 +1,118 @@
+using System;
+using System.Threading;
+
+class Stopwatch
+{
+    public delegate void StopwatchEventHandler(string message);
+
+    // Events
+    public event StopwatchEventHandler OnStarted;
+    public event StopwatchEventHandler OnStopped;
+    public event StopwatchEventHandler OnReset;
+
+    // Fields
+    private int _timeElapsed;
+    private bool _isRunning;
+    private bool _shouldStop;
+
+    public Stopwatch()
+    {
+        _timeElapsed = 0;
+        _isRunning = false;
+        _shouldStop = false;
+    }
+
+    // Methods
+    public void Start()
+    {
+        if (_isRunning)
+        {
+            Console.WriteLine("Stopwatch is already running.");
+            return;
+        }
+
+        _isRunning = true;
+        _shouldStop = false;
+        OnStarted?.Invoke("Stopwatch Started!");
+
+        while (_isRunning && !_shouldStop)
+        {
+            Tick();
+            Thread.Sleep(1000); // Simulate a 1-second tick
+        }
+    }
+
+    public void Stop()
+    {
+        if (!_isRunning)
+        {
+            Console.WriteLine("Stopwatch is not running.");
+            return;
+        }
+
+        _isRunning = false;
+        _shouldStop = true;
+        OnStopped?.Invoke("Stopwatch Stopped!");
+    }
+
+    public void Reset()
+    {
+        if (_isRunning)
+        {
+            Stop();
+        }
+
+        _timeElapsed = 0;
+        OnReset?.Invoke("Stopwatch Reset!");
+    }
+
+    private void Tick()
+    {
+        _timeElapsed++;
+        Console.Clear();
+        Console.WriteLine($"Time Elapsed: {_timeElapsed} seconds");
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        Stopwatch stopwatch = new Stopwatch();
+
+        // Event handlers
+        stopwatch.OnStarted += message => Console.WriteLine(message);
+        stopwatch.OnStopped += message => Console.WriteLine(message);
+        stopwatch.OnReset += message => Console.WriteLine(message);
+
+        Console.WriteLine("Console Stopwatch");
+        Console.WriteLine("Commands: [S] Start, [T] Stop, [R] Reset, [Q] Quit");
+
+        while (true)
+        {
+            Console.Write("Enter command: ");
+            char command = Console.ReadKey().KeyChar;
+            Console.WriteLine();
+
+            switch (char.ToUpper(command))
+            {
+                case 'S':
+                    Thread startThread = new Thread(stopwatch.Start);
+                    startThread.Start();
+                    break;
+                case 'T':
+                    stopwatch.Stop();
+                    break;
+                case 'R':
+                    stopwatch.Reset();
+                    break;
+                case 'Q':
+                    Console.WriteLine("Exiting...");
+                    return;
+                default:
+                    Console.WriteLine("Invalid command. Please use [S], [T], [R], or [Q].");
+                    break;
+            }
+        }
+    }
+}
